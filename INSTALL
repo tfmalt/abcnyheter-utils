@@ -1,0 +1,29 @@
+
+Prerequisites
+-------------
+
+You need to have 'drush' installed on your system.
+
+Installing the hooks for abcnyheter-core and abcnyheter-modules
+---------------------------------------------------------------
+
+I will assume you have the repositories checked out as below.
+Off course the repositories can we checked out wherever you see fit, just 
+make sure you update the paths in the examples accordingly:
+
+  $ pwd
+  /path
+  $ ls
+  abcnyheter-core
+  abc-utils
+
+  $ cd abcnyheter-core/.git/hooks
+  $ ln -s /path/abc-utils/hooks/modules.post-checkout post-checkout
+  $ ln -s /path/abc-utils/hooks/modules.post-merge post-merge
+  $ cd /path/abcnyheter-core/sites/all/modules/.git/hooks
+  $ ln -s /path/abc-utils/hooks/core.post-checkout post-checkout
+
+Presto. Now git will run drush updatedb each time the branch is switched.
+If more configuration is neccessary to make branches switch smoothly we will 
+implement it.
+
