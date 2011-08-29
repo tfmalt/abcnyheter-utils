@@ -4,12 +4,9 @@
 # 
 # @author Thomas Malt <thomas.malt@startsiden.no>
 #
-# TODO Verify directory we're running in
 # TODO Get list of installed modules from system table and find out which 
 #      ones were removed or added between branches.
 # TODO Verify if it's enough to do deletion in systems table and updatedb.
-# TODO Ask about running drush pm-update
-#
 
 
 # ----------------------------------------------------------------------
@@ -64,9 +61,10 @@ let ADDED=COUNT-OLD
 let REMOVED=OLD-COUNT
 
 if (( $OLD > $COUNT )); then
-    echo "  $REMOVED modules were removed. More heavy cleanup required."
+    echo "  $REMOVED modules were removed. More heavy cleanup probably required,"
+    echo "  but not implemented yet."
 else
-    echo "  $ADDED modules were added. Only regular updatedb required."
+    echo "  $ADDED modules were added. Running regular updatedb to make sure."
 fi
 
 git config hook.abcn.modulecount $COUNT
@@ -74,11 +72,11 @@ git config hook.abcn.modulecount $COUNT
 cd "$ROOT/../../.."
 # pwd
 echo "  Running $DRUSH updatedb -y ... \c";
-UPDATEDB_RESULT=$($DRUSH updatedb -y 2>&1);
+$DRUSH updatedb -y 2>/tmp/updatedb.log > /dev/null;
 echo "done.";
-if [[ $(echo $UPDATEDB_RESULT | grep 'warning') ]]; then
+if [[ $(grep 'warning' /tmp/updatedb.log) ]]; then
     echo "  Got warnings. probably do a full db restore thank you."
 fi
 
-# echo "----$UPDATEDB_RESULT----"
-
+echo "---- updatedb log: ----"
+cat /tmp/updatedb.log
