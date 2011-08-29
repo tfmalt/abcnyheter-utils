@@ -1,0 +1,84 @@
+#!/bin/sh
+# hook for cleaning up state in our drupal environment when switching 
+# between branches
+# 
+# @author Thomas Malt <thomas.malt@startsiden.no>
+#
+# TODO Verify directory we're running in
+# TODO Get list of installed modules from system table and find out which 
+#      ones were removed or added between branches.
+# TODO Verify if it's enough to do deletion in systems table and updatedb.
+# TODO Ask about running drush pm-update
+#
+
+
+# ----------------------------------------------------------------------
+# Assertions and setting up contracts for when to run.
+#  * No running this script from the command line
+#  * No running this script when only checking out a file
+#  * No running this script when still in current branch.
+# 
+if [ -z "$GIT_DIR" ]; then
+        echo "Don't run this script from the command line."
+	echo " (if you want, you could supply GIT_DIR then run"
+        echo "  $0 <ref> <oldrev> <newrev>)"
+        exit 1
+fi
+if (( ! $3 )); then
+    echo "post-checkout hook: Not running when doing checkout of file"
+    exit
+fi
+if [ $1 == $2 ]; then
+    echo "Trying to checkout current branch. No need to run."
+    exit
+fi
+# ----------------------------------------------------------------------
+
+#---------------------------------------------------------------------- 
+# Config setup
+# 
+ROOT=$(pwd)
+DRUSH=$(which drush)
+#----------------------------------------------------------------------
+
+# Real start of hook
+echo "Switching branch. Running post-checkout hook."
+
+if [ $(pwd | grep 'sites/all/modules$') ]; then 
+    echo "  Running from abcnyheter-modules inside abcnyheter-core. Good."; 
+else 
+    echo "  Running from unknown location: $ROOT"
+    exit
+fi
+
+if [ "x$DRUSH" == "x" ]; then
+    echo "Could not find drush in path. Please install drush"
+    exit
+fi
+
+
+OLD=$(git config --get hook.abcn.modulecount)
+COUNT=$(ls -1 | wc -l)
+let COUNT=COUNT+0
+let ADDED=COUNT-OLD
+let REMOVED=OLD-COUNT
+
+if (( $OLD > $COUNT )); then
+    echo "  $REMOVED modules were removed. More heavy cleanup required."
+else
+    echo "  $ADDED modules were added. Only regular updatedb required."
+fi
+
+git config hook.abcn.modulecount $COUNT
+
+cd "$ROOT/../../.."
+# pwd
+echo "  Running $DRUSH updatedb -y ... \c";
+UPDATEDB_RESULT=$($DRUSH updatedb -y 2>&1);
+echo "done.";
+if [[ $(echo $UPDATEDB_RESULT | grep 'warning') ]]; then
+    echo "  Got warnings. probably do a full db restore thank you."
+fi
+
+# echo "----$UPDATEDB_RESULT----"
+
