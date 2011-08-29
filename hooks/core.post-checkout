@@ -1,0 +1,35 @@
+#!/bin/sh
+# hook for cleaning up state in our drupal environment when switching 
+# between branches
+# 
+# @author Thomas Malt <thomas.malt@startsiden.no>
+#
+# TODO Verify directory we're running in
+# TODO Get list of installed modules from system table and find out which 
+#      ones were removed or added between branches.
+# TODO Verify if it's enough to do deletion in systems table and updatedb.
+# TODO Ask about running drush pm-update
+#
+
+if (( ! $3 )); then
+    echo "post-checkout hook: Not running when doing checkout of file"
+    exit
+fi
+
+
+DRUSH=$(which drush)
+
+echo "Switching branch. Running post-checkout hook."
+
+if [ "x$DRUSH" == "x" ]; then
+    echo "Could not find drush in path. Please install drush"
+    exit
+fi
+if [ $1 == $2 ]; then
+    echo "Trying to checkout current branch. No need to run."
+    exit
+fi
+
+echo "  Running $DRUSH updatedb -y";
+$DRUSH updatedb -y
+

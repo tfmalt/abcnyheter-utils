@@ -1,0 +1,4 @@
+#!/bin/sh
+#
+
+echo "post-merge hook called: $1"
