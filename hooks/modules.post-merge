@@ -1,4 +1,66 @@
-#!/bin/sh
+#!/bin/bash
 #
+# When merging in changes to modules we verify if modules are added or removed 
+# we run updatedb.
+#
+# @author Thomas Malt <thomas.malt@startsiden.no>
+#
+# TODO When modules are removed we should restore the database completely
+# TODO If updatedb gives warnings or errors we should restore the db. 
+#      complete from a known point in time.
+# 
 
-echo "post-merge hook called: $1"
+ROOT=$(pwd)
+DRUSH=$(which drush)
+
+echo "post-merge hook called: $1|$2|$3"
+
+# Assertions and setting up contracts for when to run.
+#  * No running this script from the command line                  
+#  * Verify we have drush installed.
+#
+if [ -z "$GIT_DIR" ]; then
+        echo "Don't run this script from the command line."
+        echo " (if you want, you could supply GIT_DIR then run"
+        echo "  $0 <ref> <oldrev> <newrev>)"
+        exit 1
+fi
+
+if [ "x$DRUSH" == "x" ]; then
+    echo "Could not find drush in path. Please install drush"
+    exit
+fi
+
+if [ $(pwd | grep 'sites/all/modules$') ]; then
+    echo "  Running from abcnyheter-modules inside abcnyheter-core. Good.";
+else
+    echo "  Running from unknown location: $ROOT"
+    exit
+fi
+
+
+OLD=$(git config --get hook.abcn.modulecount)
+COUNT=$(ls -1 | wc -l)
+let COUNT=COUNT+0
+let ADDED=COUNT-OLD
+let REMOVED=OLD-COUNT
+
+if (( $OLD > $COUNT )); then
+    echo "  $REMOVED modules were removed. More heavy cleanup probably required,"
+    echo "  but not implemented yet."
+else
+    echo "  $ADDED modules were added. Running regular updatedb to make sure."
+fi
+
+git config hook.abcn.modulecount $COUNT
+cd "$ROOT/../../.."
+
+echo "  Running $DRUSH updatedb -y ... \c";
+$DRUSH updatedb -y 2>/tmp/updatedb.log > /dev/null;
+echo "done.";
+if [[ $(grep 'warning' /tmp/updatedb.log) ]]; then
+    echo "  Got warnings. probably do a full db restore thank you."
+fi
+
+echo "---- updatedb log: ----"
+cat /tmp/updatedb.log

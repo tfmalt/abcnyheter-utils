@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 # hook for cleaning up state in our drupal environment when switching 
 # between branches
 # 
