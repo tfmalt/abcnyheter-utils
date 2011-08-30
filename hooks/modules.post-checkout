@@ -72,7 +72,7 @@ git config hook.abcn.modulecount $COUNT
 
 cd "$ROOT/../../.."
 # pwd
-echo "  Running $DRUSH updatedb -y ... \c";
+echo -n "  Running $DRUSH updatedb -y ... ";
 $DRUSH updatedb -y 2>/tmp/updatedb.log > /dev/null;
 echo "done.";
 if [[ $(grep 'warning' /tmp/updatedb.log) ]]; then

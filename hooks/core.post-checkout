@@ -1,4 +1,5 @@
 #!/bin/bash
+#
 # hook for cleaning up state in our drupal environment when switching 
 # between branches
 # 
@@ -43,7 +44,7 @@ if [ "x$DRUSH" == "x" ]; then
     exit
 fi
 
-echo "  Running $DRUSH updatedb -y just to make sure ... \c";
+echo -n "  Running $DRUSH updatedb -y just to make sure ... ";
 $DRUSH updatedb -y 2>/tmp/updatedb.log > /dev/null;
 echo "done.";
 if [[ $(grep 'warning' /tmp/updatedb.log) ]]; then
